@@ -1,4 +1,4 @@
-splitOneOf :: [Char] -> String -> [String]
+splitOneOf :: [Char] -> (String -> [String])
 splitOneOf _ "" = [""]                                -- Base case: splitting an empty string
 splitOneOf delimiters (x:xs) =                        
     if elem x delimiters then "" : rest               -- If the current character is one of the delimiters, then start a new string
@@ -15,22 +15,46 @@ parseLine line = (minAmount, maxAmount, requiredChar, password)
         requiredChar = head (args !! 2)                 -- Use head to get the first character of this string (there's only one character anyway)
         password = args !! 4                            -- The password is already a string. There is both a colon and a space before the password...just skip the empty string between them
         
-isValidPassword :: Int -> Int -> Char -> String -> Bool
-isValidPassword min max requiredChar password
-    | max == 0 = not (elem requiredChar password)                                                           -- If our max is 0, then the password should not contain the required character
-    | password == "" = min == 0                                                                             -- If we have an empty string password, then the min count needs to be 0
-    | head password == requiredChar = isValidPassword (min - 1) (max - 1) requiredChar (tail password)      -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
-    | otherwise = isValidPassword min max requiredChar (tail password)                                      -- If the first character is _not_ the required character, then just keep iterating along
+solvePart1 :: Int -> Int -> Char -> String -> Bool
+solvePart1 min max character password
+    | max == 0 = not (elem character password)                                                          -- If our max is 0, then the password should not contain the required character
+    | password == "" = min <= 0                                                                         -- If we have an empty string password, then the min count needs to be 0
+    | head password == character = solvePart1 (min - 1) (max - 1) character (tail password)             -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
+    | otherwise = solvePart1 min max character (tail password)                                          -- If the first character is _not_ the required character, then just keep iterating along
 
-solveLine :: String -> Bool
-solveLine line = isValidPassword min max requiredChar password
+-- NOTE: This function assumes that the indexes are always in ascending order
+isCharacterAtOnlyOneOf :: Char -> [Int] -> String -> Bool
+isCharacterAtOnlyOneOf _ [] _ = False
+isCharacterAtOnlyOneOf _ _ [] = False
+isCharacterAtOnlyOneOf character indexes (x:xs) =
+    if head indexes == 0 then (x == character) /= isCharacterAtOnlyOneOf character (decrementAll (tail indexes)) xs        -- If we've reached the next index to check, and the value exists at this index, then it has to NOT exist at the others. Alternatively, if it doesn't exist at this index then it has to exist at one of the others
+    else isCharacterAtOnlyOneOf character (decrementAll indexes) xs                                                        -- If we haven't reached an index yet, just continue moving along the string. Indexes decrement as we go since we're stripping away characters from the head each time.
+    where
+        decrementAll = map (\x -> x - 1)
+
+solvePart2 :: Int -> Int -> Char -> String -> Bool
+solvePart2 index1 index2 character value = isCharacterAtOnlyOneOf character [index1-1, index2-1] value      -- The indexes in the input are one-based, so decrement them both to go back to a zero-based system
+
+solveLine :: String -> (Bool, Bool)
+solveLine line = (answer1, answer2)
     where
         (min, max, requiredChar, password) = parseLine line
+        answer1 = solvePart1 min max requiredChar password
+        answer2 = solvePart2 min max requiredChar password
 
-main = putStrLn ("Answer 1: " ++ (show numValidPasswords))
+countAnswers :: [(Bool, Bool)] -> (Int, Int)
+countAnswers answers
+    | null answers = (0,0)
+    | otherwise = (counter1 + (fromEnum answer1), counter2 + (fromEnum answer2))
     where
-        isValidResults = map solveLine (lines input)                                                        -- Map each line to a Bool indicating whether or not it passes the policy
-        numValidPasswords = length (filter id isValidResults)                                               -- Count the number of True values in this list
+        (answer1, answer2) = head answers
+        (counter1, counter2) = countAnswers (tail answers)
+
+main = putStrLn ("Answer 1: " ++ (show finalAnswer1) ++ "\n" ++ "Answer 2: " ++ (show finalAnswer2))
+    where
+        lineAnswers = map solveLine (lines input)                                                       -- Map each line to a Bool indicating whether or not it passes the policy
+        (finalAnswer1, finalAnswer2) = countAnswers lineAnswers                                         -- Count the number of True values in this list
+        
 
 -- Putting the input into a string variable rather than a seperate file so that the script can be copied and pasted into an online compiler.
 input = "1-4 m: mrfmmbjxr\n\
