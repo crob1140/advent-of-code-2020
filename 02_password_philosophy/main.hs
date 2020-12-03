@@ -15,12 +15,12 @@ parseLine line = (minAmount, maxAmount, requiredChar, password)
         requiredChar = head (args !! 2)                 -- Use head to get the first character of this string (there's only one character anyway)
         password = args !! 4                            -- The password is already a string. There is both a colon and a space before the password...just skip the empty string between them
         
-solvePart1 :: Int -> Int -> Char -> String -> Bool
-solvePart1 _ 0 character password = not (elem character password)                       -- If the maximum occurrences is 0, then the character shouldn't exist at all in the string
-solvePart1 minOccurs _ _ "" = minOccurs < 1                                             -- If our string is empty, then it is only valid if we have no minimum occurrence requirement
-solvePart1 minOccurs maxOccurs character (x:xs) =
-    if x == character then solvePart1 (minOccurs - 1) (maxOccurs - 1) character xs      -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
-    else solvePart1 minOccurs maxOccurs character xs                                    -- If the first character is _not_ the required character, then just keep iterating along
+containsCharacterCountInRange :: Int -> Int -> Char -> String -> Bool
+containsCharacterCountInRange _ 0 character password = not (elem character password)                       -- If the maximum occurrences is 0, then the character shouldn't exist at all in the string
+containsCharacterCountInRange minOccurs _ _ "" = minOccurs < 1                                             -- If our string is empty, then it is only valid if we have no minimum occurrence requirement
+containsCharacterCountInRange minOccurs maxOccurs character (x:xs) =
+    if x == character then containsCharacterCountInRange (minOccurs - 1) (maxOccurs - 1) character xs      -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
+    else containsCharacterCountInRange minOccurs maxOccurs character xs                                    -- If the first character is _not_ the required character, then just keep iterating along
 
 -- NOTE: This function assumes that the indexes are always in ascending order
 isCharacterAtOnlyOneOf :: Char -> [Int] -> String -> Bool
@@ -32,29 +32,31 @@ isCharacterAtOnlyOneOf character indexes (x:xs) =
     where
         decrementAll = map (\x -> x - 1)
 
-solvePart2 :: Int -> Int -> Char -> String -> Bool
-solvePart2 index1 index2 character value = isCharacterAtOnlyOneOf character [index1-1, index2-1] value      -- The indexes in the input are one-based, so decrement them both to go back to a zero-based system
+passesFirstPasswordPolicy :: Int -> Int -> Char -> String -> Bool
+passesFirstPasswordPolicy = containsCharacterCountInRange
 
-solveLine :: String -> (Bool, Bool)
-solveLine line = (answer1, answer2)
-    where
-        (min, max, requiredChar, password) = parseLine line
-        answer1 = solvePart1 min max requiredChar password
-        answer2 = solvePart2 min max requiredChar password
+passesSecondPasswordPolicy :: Int -> Int -> Char -> String -> Bool
+passesSecondPasswordPolicy index1 index2 character value = isCharacterAtOnlyOneOf character [index1-1, index2-1] value      -- The indexes in the input are one-based, so decrement them both to go back to a zero-based system
 
-countAnswers :: [(Bool, Bool)] -> (Int, Int)
-countAnswers answers
-    | null answers = (0,0)
-    | otherwise = (counter1 + (fromEnum answer1), counter2 + (fromEnum answer2))
+checkLine :: String -> (Bool, Bool)
+checkLine line = (isValidAgainstFirstPolicy, isValidAgainstSecondPolicy)
     where
-        (answer1, answer2) = head answers
-        (counter1, counter2) = countAnswers (tail answers)
+        (num1, num2, requiredChar, password) = parseLine line
+        isValidAgainstFirstPolicy = passesFirstPasswordPolicy num1 num2 requiredChar password
+        isValidAgainstSecondPolicy = passesSecondPasswordPolicy num1 num2 requiredChar password
 
-main = putStrLn ("Answer 1: " ++ (show finalAnswer1) ++ "\n" ++ "Answer 2: " ++ (show finalAnswer2))
+countPasses :: [(Bool, Bool)] -> (Int, Int)
+countPasses policyResults
+    | null policyResults = (0,0)
+    | otherwise = (firstPolicyPasses + (fromEnum passedFirstPolicy), secondPolicyPasses + (fromEnum passedSecondPolicy))
     where
-        lineAnswers = map solveLine (lines input)                                                       -- Map each line to a Bool indicating whether or not it passes the policy
-        (finalAnswer1, finalAnswer2) = countAnswers lineAnswers                                         -- Count the number of True values in this list
-        
+        (passedFirstPolicy, passedSecondPolicy) = head policyResults
+        (firstPolicyPasses, secondPolicyPasses) = countPasses (tail policyResults)
+
+main = putStrLn ("Answer 1: " ++ (show numFirstPolicyPasses) ++ "\n" ++ "Answer 2: " ++ (show numSecondPolicyPasses))
+    where
+        passwordPolicyResults = map checkLine (lines input)                     -- Map each line to a Bool indicating whether or not it passes the policy
+        (numFirstPolicyPasses, numSecondPolicyPasses) = countPasses passwordPolicyResults       -- Count the number of True values in this list
 
 -- Putting the input into a string variable rather than a seperate file so that the script can be copied and pasted into an online compiler.
 input = "1-4 m: mrfmmbjxr\n\
