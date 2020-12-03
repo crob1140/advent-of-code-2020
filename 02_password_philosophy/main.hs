@@ -46,9 +46,8 @@ checkLine line = (isValidAgainstFirstPolicy, isValidAgainstSecondPolicy)
         isValidAgainstSecondPolicy = passesSecondPasswordPolicy num1 num2 requiredChar password
 
 countPasses :: [(Bool, Bool)] -> (Int, Int)
-countPasses policyResults
-    | null policyResults = (0,0)
-    | otherwise = (firstPolicyPasses + (fromEnum passedFirstPolicy), secondPolicyPasses + (fromEnum passedSecondPolicy))
+countPasses [] = (0,0)
+countPasses policyResults = (firstPolicyPasses + (fromEnum passedFirstPolicy), secondPolicyPasses + (fromEnum passedSecondPolicy))
     where
         (passedFirstPolicy, passedSecondPolicy) = head policyResults
         (firstPolicyPasses, secondPolicyPasses) = countPasses (tail policyResults)
