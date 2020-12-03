@@ -1,14 +1,14 @@
 countTreesInPath :: Int -> Int -> [[Char]] -> Int
 countTreesInPath _ _ [] = 0
-countTreesInPath dx dy grid = countTreesInPath' dx dy
+countTreesInPath dx dy grid = countStartingFromIndex dx dy
     where
         width = length (head grid)
         height = length grid
-        countTreesInPath' x y
-            | y >= height = 0                                                                            -- Base case: we've reached the bottom
-            | x >= width = countTreesInPath' (x - width) y                                               -- When we reach the right-side, just wrap around since the pattern repeats
-            | otherwise = (fromEnum (((grid !! y) !! x) == '#')) + countTreesInPath' (x + dx) (y + dy)   -- Otherwise, check the character at this index, and then call this function again with the next index to keep moving down
-                                                                                                         -- TODO: This does not scale well at all and could use some performance improvements. Lists in Haskell are linked lists, so checking each value requires us to iterate from the top-left again. 
+        countStartingFromIndex x y
+            | y >= height = 0                                                                                   -- Base case: we've reached the bottom
+            | x >= width = countStartingFromIndex (x - width) y                                                 -- When we reach the right-side, just wrap around since the pattern repeats
+            | otherwise = (fromEnum (((grid !! y) !! x) == '#')) + countStartingFromIndex (x + dx) (y + dy)     -- Otherwise, check the character at this index, and then call this function again with the next index to keep moving down
+                                                                                                                -- TODO: This does not scale well at all and could use some performance improvements. Lists in Haskell are linked lists, so checking each value requires us to iterate from the top-left again. 
 solvePart1 :: [[Char]] -> Int
 solvePart1 = countTreesInPath 3 1
 
