@@ -16,11 +16,11 @@ parseLine line = (minAmount, maxAmount, requiredChar, password)
         password = args !! 4                            -- The password is already a string. There is both a colon and a space before the password...just skip the empty string between them
         
 solvePart1 :: Int -> Int -> Char -> String -> Bool
-solvePart1 min max character password
-    | max == 0 = not (elem character password)                                                          -- If our max is 0, then the password should not contain the required character
-    | password == "" = min <= 0                                                                         -- If we have an empty string password, then the min count needs to be 0
-    | head password == character = solvePart1 (min - 1) (max - 1) character (tail password)             -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
-    | otherwise = solvePart1 min max character (tail password)                                          -- If the first character is _not_ the required character, then just keep iterating along
+solvePart1 _ 0 character password = not (elem character password)                       -- If the maximum occurrences is 0, then the character shouldn't exist at all in the string
+solvePart1 minOccurs _ _ "" = minOccurs < 1                                             -- If our string is empty, then it is only valid if we have no minimum occurrence requirement
+solvePart1 minOccurs maxOccurs character (x:xs) =
+    if x == character then solvePart1 (minOccurs - 1) (maxOccurs - 1) character xs      -- If the first character in the password is the required character, then our min and max are both reduced by 1 for the remainder of the string
+    else solvePart1 minOccurs maxOccurs character xs                                    -- If the first character is _not_ the required character, then just keep iterating along
 
 -- NOTE: This function assumes that the indexes are always in ascending order
 isCharacterAtOnlyOneOf :: Char -> [Int] -> String -> Bool
