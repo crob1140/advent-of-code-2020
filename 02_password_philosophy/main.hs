@@ -55,7 +55,7 @@ countPasses policyResults
 
 main = putStrLn ("Answer 1: " ++ (show numFirstPolicyPasses) ++ "\n" ++ "Answer 2: " ++ (show numSecondPolicyPasses))
     where
-        passwordPolicyResults = map checkLine (lines input)                     -- Map each line to a Bool indicating whether or not it passes the policy
+        passwordPolicyResults = map checkLine (lines input)                                     -- Map each line to a Bool indicating whether or not it passes the policy
         (numFirstPolicyPasses, numSecondPolicyPasses) = countPasses passwordPolicyResults       -- Count the number of True values in this list
 
 -- Putting the input into a string variable rather than a seperate file so that the script can be copied and pasted into an online compiler.
