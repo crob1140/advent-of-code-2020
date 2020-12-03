@@ -17,7 +17,11 @@ solvePart2 grid = product treesInPaths
     where
          treesInPaths = map (\(dx,dy) -> countTreesInPath dx dy grid) [(1,1),(3,1),(5,1),(7,1),(1,2)]
 
-main = putStrLn (show (solvePart2 (lines input)))
+main = putStrLn ("Answer 1: " ++ (show answer1) ++ "\n" ++ "Answer 2: " ++ (show answer2))
+    where
+        grid = lines input
+        answer1 = solvePart1 grid
+        answer2 = solvePart2 grid
 
 -- Putting the input into a string variable rather than a seperate file so that the script can be copied and pasted into an online compiler.
 input = "....#...##.#.........#....#....\n\
